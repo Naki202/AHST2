@@ -1,2 +1,2 @@
 # AHST2
-aimbot for Criminality 
+always head so

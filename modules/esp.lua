@@ -1,0 +1,89 @@
+local function CreateBillboardESP(character)
+    if not character then return end
+    local head = character:FindFirstChild("Head")
+    if not head then return end
+
+    -- Nếu đã có sẵn billboard thì chỉ cần đồng bộ trạng thái hiển thị
+    local existing = head:FindFirstChild("ESP_Billboard")
+    if existing then
+        existing.Enabled = ESPEnabled
+        return existing
+    end
+
+    -- Tạo BillboardGui mới
+    local billboard = Instance.new("BillboardGui")
+    billboard.Name = "ESP_Billboard"
+    billboard.Adornee = head
+    billboard.Size = UDim2.new(0, 60, 0, 16)  -- nhỏ gọn hơn
+    billboard.StudsOffset = Vector3.new(0, 2, 0)
+    billboard.AlwaysOnTop = true
+    billboard.Enabled = ESPEnabled   -- ẩn/hiện theo toggle hiện tại
+
+    -- Label bên trong
+    local label = Instance.new("TextLabel")
+    label.BackgroundTransparency = 1
+    label.Size = UDim2.new(1, 0, 1, 0)
+    label.Text = character.Name or ""
+    label.TextColor3 = Color3.fromRGB(0, 255, 0)        -- xanh lá mạ
+    label.Font = Enum.Font.GothamSemibold
+    label.TextSize = 12
+    label.TextStrokeTransparency = 0
+    label.TextStrokeColor3 = Color3.new(0, 0, 0)
+    label.Parent = billboard
+
+    billboard.Parent = head
+    return billboard
+end
+
+local function SetupESPForPlayer(player)
+    player.CharacterAdded:Connect(function(char)
+        wait(0.1)
+        local billboard = CreateBillboardESP(char)
+        ESP_Objects[player] = billboard
+    end)
+    if player.Character then
+        local billboard = CreateBillboardESP(player.Character)
+        ESP_Objects[player] = billboard
+    end
+end
+
+for _, player in pairs(Players:GetPlayers()) do
+    if player ~= LocalPlayer then SetupESPForPlayer(player) end
+end
+
+Players.PlayerAdded:Connect(function(plr)
+    if plr ~= LocalPlayer then SetupESPForPlayer(plr) end
+end)
+
+-- Giảm tần suất cập nhật offset ESP (cập nhật mỗi 0.1s thay vì mỗi frame)
+local lastESPUpdate = 0
+RunService.RenderStepped:Connect(function()
+    if not ESPEnabled then return end
+    local now = tick()
+    if now - lastESPUpdate < 0.1 then return end
+    lastESPUpdate = now
+
+    local screenPositions = {}
+    for player, billboard in pairs(ESP_Objects) do
+        local char = player.Character
+        if char and billboard and billboard.Adornee then
+            local head = char:FindFirstChild("Head")
+            if head then
+                local pos, onScreen = Camera:WorldToViewportPoint(head.Position)
+                if onScreen then
+                    table.insert(screenPositions, {billboard = billboard, screenY = pos.Y})
+                end
+            end
+        end
+    end
+    table.sort(screenPositions, function(a, b) return a.screenY < b.screenY end)
+
+    local offsetY = 0
+    local spacing = 12
+    for _, data in ipairs(screenPositions) do
+        if data.billboard and data.billboard.Parent then
+            data.billboard.StudsOffset = Vector3.new(0, 2 + offsetY / 50, 0)
+            offsetY += spacing           
+        end
+    end
+end)

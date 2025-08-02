@@ -1,0 +1,16 @@
+-- AHS T3 Loader - Gọi 3 module từ file .txt trong thư mục /modules
+
+local function fetch(url)
+    local response, err = pcall(function()
+        return loadstring(game:HttpGet(url))()
+    end)
+    if not response then
+        print("[AHS Loader] Lỗi khi tải: " .. tostring(err))
+    end
+end
+
+fetch("https://raw.githubusercontent.com/Naki202/AHST2/refs/heads/main/modules/core.txt")
+fetch("https://raw.githubusercontent.com/Naki202/AHST2/refs/heads/main/modules/esp.txt")
+fetch("https://raw.githubusercontent.com/Naki202/AHST2/refs/heads/main/modules/ui.txt")
+
+print("[AHS Loader] ✅ Tất cả module đã được tải thành công.")

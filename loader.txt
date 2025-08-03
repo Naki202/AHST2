@@ -1,0 +1,4 @@
+-- AHS T3 Loader by Namkibo
+loadstring(game:HttpGet("https://raw.githubusercontent.com/Naki202/AHST2/refs/heads/main/modules/core.txt"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/Naki202/AHST2/refs/heads/main/modules/ui.txt"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/Naki202/AHST2/refs/heads/main/modules/esp.txt"))()

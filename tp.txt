@@ -5,7 +5,7 @@
 -- KHÔNG DÙNG PRELOAD
 local function PlayTPSound()
     local s = Instance.new("Sound")
-    s.SoundId = "rbxassetid://8626458303"
+    s.SoundId = "rbxassetid://9075958058"
     s.Volume = 1
     s.PlayOnRemove = true
     s.Parent = game:GetService("SoundService")

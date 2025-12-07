@@ -3,7 +3,7 @@
 --// ===========================================
 
 -- Nếu GUI đang tồn tại -> xóa
-if game.CoreGui:FindFirstChild("TPMenu2") then
+if game.CoreGui:FindFirstChild("TPfeces") then
     game.CoreGui.TPMenu2:Destroy()
 end
 

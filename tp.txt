@@ -4,7 +4,7 @@
 
 -- Nếu GUI đang tồn tại -> xóa
 if game.CoreGui:FindFirstChild("TPfeces") then
-    game.CoreGui.TPMenu2:Destroy()
+    game.CoreGui.TPfeces:Destroy()
 end
 
 -- KHÔNG DÙNG PRELOAD

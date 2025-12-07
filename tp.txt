@@ -8,7 +8,7 @@ if game.CoreGui:FindFirstChild("TPMenu2") then
 end
 
 -- PRELOAD ÂM THANH
-local SoundId = "rbxassetid://8383718211"
+local SoundId = "rbxassetid://5066021887"
 game:GetService("ContentProvider"):PreloadAsync({SoundId})
 
 -- PLAY SOUND ULTRA FAST

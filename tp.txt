@@ -2,11 +2,6 @@
 --// TP MENU 2.0
 --// ===========================================
 
--- Nếu GUI đang tồn tại -> xóa
-if game.CoreGui:FindFirstChild("TPfeces") then
-    game.CoreGui.TPfeces:Destroy()
-end
-
 -- KHÔNG DÙNG PRELOAD
 local function PlayTPSound()
     local s = Instance.new("Sound")

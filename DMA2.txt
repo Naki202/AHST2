@@ -1,0 +1,230 @@
+--====================================================
+--  MODEL ESP FIX RANGE (DELTA)
+--====================================================
+
+--// SERVICES
+local Workspace = game:GetService("Workspace")
+local Players = game:GetService("Players")
+local LP = Players.LocalPlayer
+
+--====================================================
+--  SAVE LIST
+--====================================================
+_G.SAVED_MODELS = _G.SAVED_MODELS or {}
+local TargetNames = _G.SAVED_MODELS
+
+--====================================================
+--  SETTINGS
+--====================================================
+local ESP_ENABLED = true
+local ESP_COLOR = Color3.fromRGB(255, 80, 80)
+
+--====================================================
+--  STORAGE
+--====================================================
+local ActiveESP = {}
+
+--====================================================
+--  ESP FUNCTIONS
+--====================================================
+
+local function createNameTag(model)
+    if model:FindFirstChild("ESP_NAME") then return end
+
+    local part = model:FindFirstChildWhichIsA("BasePart", true)
+    if not part then return end
+
+    local gui = Instance.new("BillboardGui")
+    gui.Name = "ESP_FECES"
+    gui.Adornee = part
+    gui.Size = UDim2.fromOffset(200, 40)
+    gui.StudsOffset = Vector3.new(0, 2, 0)
+    gui.AlwaysOnTop = true
+    gui.Parent = model
+
+    local text = Instance.new("TextLabel", gui)
+    text.Size = UDim2.fromScale(1,1)
+    text.BackgroundTransparency = 1
+    text.Text = model.Name
+    text.TextColor3 = ESP_COLOR
+    text.TextStrokeTransparency = 0
+    text.Font = Enum.Font.GothamBold
+    text.TextScaled = true
+end
+
+local function applyChams(model)
+    if ActiveESP[model] then return end
+    if not model:IsA("Model") then return end
+
+    local folder = Instance.new("Folder")
+    folder.Name = "ESP_CHAMS"
+    folder.Parent = model
+
+    for _, part in ipairs(model:GetDescendants()) do
+        if part:IsA("BasePart") then
+            local sel = Instance.new("SelectionBox")
+            sel.Adornee = part
+            sel.LineThickness = 0.02
+            sel.Color3 = ESP_COLOR
+            sel.Transparency = 0.15
+            sel.SurfaceTransparency = 1
+            sel.Parent = folder
+        end
+    end
+
+    createNameTag(model)
+    ActiveESP[model] = folder
+end
+
+local function removeChams(model)
+    if ActiveESP[model] then
+        ActiveESP[model]:Destroy()
+        ActiveESP[model] = nil
+    end
+    if model:FindFirstChild("ESP_NAME") then
+        model.ESP_NAME:Destroy()
+    end
+end
+
+--====================================================
+--  GLOBAL SCAN (ONCE)
+--====================================================
+for _, obj in ipairs(Workspace:GetDescendants()) do
+    if obj:IsA("Model") and TargetNames[obj.Name] then
+        applyChams(obj)
+    end
+end
+
+--====================================================
+--  AUTO DETECT NEW MODELS (NO RANGE LIMIT)
+--====================================================
+Workspace.DescendantAdded:Connect(function(obj)
+    if not ESP_ENABLED then return end
+    if obj:IsA("Model") and TargetNames[obj.Name] then
+        task.wait(0.1) -- đợi part load
+        applyChams(obj)
+    end
+end)
+
+--====================================================
+--  GUI (GIỮ NGUYÊN LOGIC CŨ)
+--====================================================
+
+local gui = Instance.new("ScreenGui", LP.PlayerGui)
+gui.Name = "MODEL_ESP_GUI"
+gui.ResetOnSpawn = false
+
+local main = Instance.new("Frame", gui)
+main.Size = UDim2.fromOffset(260,240)
+main.Position = UDim2.fromScale(0.05,0.3)
+main.BackgroundColor3 = Color3.fromRGB(20,20,20)
+main.Active = true
+main.Draggable = true
+main.BorderSizePixel = 0
+Instance.new("UICorner", main).CornerRadius = UDim.new(0,10)
+
+local title = Instance.new("TextLabel", main)
+title.Size = UDim2.new(1,-40,0,30)
+title.Position = UDim2.fromOffset(10,0)
+title.BackgroundTransparency = 1
+title.Text = "MODEL ESP GLOBAL"
+title.TextColor3 = Color3.new(1,1,1)
+title.Font = Enum.Font.GothamBold
+title.TextSize = 14
+title.TextXAlignment = Enum.TextXAlignment.Left
+
+local mini = Instance.new("TextButton", main)
+mini.Size = UDim2.fromOffset(30,30)
+mini.Position = UDim2.fromOffset(220,0)
+mini.Text = "-"
+mini.BackgroundColor3 = Color3.fromRGB(40,40,40)
+mini.TextColor3 = Color3.new(1,1,1)
+mini.Font = Enum.Font.GothamBold
+mini.TextSize = 18
+Instance.new("UICorner", mini)
+
+local content = Instance.new("Frame", main)
+content.Position = UDim2.fromOffset(0,30)
+content.Size = UDim2.fromOffset(260,210)
+content.BackgroundTransparency = 1
+
+local box = Instance.new("TextBox", content)
+box.Position = UDim2.fromOffset(20,10)
+box.Size = UDim2.fromOffset(220,30)
+box.PlaceholderText = "Nhập tên Model"
+box.ClearTextOnFocus = false
+box.BackgroundColor3 = Color3.fromRGB(40,40,40)
+box.TextColor3 = Color3.new(1,1,1)
+box.Font = Enum.Font.Gotham
+box.TextSize = 13
+Instance.new("UICorner", box)
+
+local add = Instance.new("TextButton", content)
+add.Position = UDim2.fromOffset(20,50)
+add.Size = UDim2.fromOffset(220,30)
+add.Text = "ADD MODEL"
+add.BackgroundColor3 = Color3.fromRGB(60,60,60)
+add.TextColor3 = Color3.new(1,1,1)
+add.Font = Enum.Font.Gotham
+add.TextSize = 13
+Instance.new("UICorner", add)
+
+local remove = Instance.new("TextButton", content)
+remove.Position = UDim2.fromOffset(20,90)
+remove.Size = UDim2.fromOffset(220,30)
+remove.Text = "REMOVE MODEL"
+remove.BackgroundColor3 = Color3.fromRGB(80,40,40)
+remove.TextColor3 = Color3.new(1,1,1)
+remove.Font = Enum.Font.Gotham
+remove.TextSize = 13
+Instance.new("UICorner", remove)
+
+local toggle = Instance.new("TextButton", content)
+toggle.Position = UDim2.fromOffset(20,130)
+toggle.Size = UDim2.fromOffset(220,30)
+toggle.Text = "ESP: ON"
+toggle.BackgroundColor3 = Color3.fromRGB(50,50,50)
+toggle.TextColor3 = Color3.new(1,1,1)
+toggle.Font = Enum.Font.Gotham
+toggle.TextSize = 13
+Instance.new("UICorner", toggle)
+
+-- BUTTON LOGIC
+add.MouseButton1Click:Connect(function()
+    if box.Text ~= "" then
+        TargetNames[box.Text] = true
+        -- apply ngay cho model đã tồn tại
+        for _,obj in ipairs(Workspace:GetDescendants()) do
+            if obj:IsA("Model") and obj.Name == box.Text then
+                applyChams(obj)
+            end
+        end
+        box.Text = ""
+    end
+end)
+
+remove.MouseButton1Click:Connect(function()
+    local name = box.Text
+    if TargetNames[name] then
+        TargetNames[name] = nil
+        for model,_ in pairs(ActiveESP) do
+            if model.Name == name then
+                removeChams(model)
+            end
+        end
+        box.Text = ""
+    end
+end)
+
+toggle.MouseButton1Click:Connect(function()
+    ESP_ENABLED = not ESP_ENABLED
+    toggle.Text = ESP_ENABLED and "ESP: ON" or "ESP: OFF"
+end)
+
+local minimized = false
+mini.MouseButton1Click:Connect(function()
+    minimized = not minimized
+    content.Visible = not minimized
+    main.Size = minimized and UDim2.fromOffset(260,30) or UDim2.fromOffset(260,240)
+    mini.Text = minimized and "+" or "-"
+end)

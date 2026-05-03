@@ -1,0 +1,389 @@
+-- N FINAL (FIX ALL + CHAMS)
+
+local Players = game:GetService("Players")
+local UIS = game:GetService("UserInputService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Workspace = game:GetService("Workspace")
+
+local LocalPlayer = Players.LocalPlayer
+local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+
+_G.Settings = { Ragebot = false }
+_G.Config = {
+	UsePrediction = true,
+	Prediction = 0.12,
+	UseTargetList = false,
+	TargetList = {},
+	Range = 130
+}
+
+-- CLEAN GUI
+pcall(function()
+	if PlayerGui:FindFirstChild("THỊT BA CHỈ") then
+		PlayerGui["THỊT BA CHỈ"]:Destroy()
+	end
+end)
+
+-- GUI
+local gui = Instance.new("ScreenGui")
+gui.Name = "THỊT BA CHỈ"
+gui.ResetOnSpawn = false
+gui.Parent = PlayerGui
+
+-- FLOAT
+local float = Instance.new("TextButton", gui)
+float.Size = UDim2.new(0,50,0,50)
+float.Position = UDim2.new(0.05,0,0.5,0)
+float.Text = "N"
+float.BackgroundColor3 = Color3.fromRGB(25,25,30)
+float.TextColor3 = Color3.new(1,1,1)
+Instance.new("UICorner", float)
+
+-- MAIN
+local main = Instance.new("Frame", gui)
+main.Size = UDim2.new(0,380,0,420)
+main.Position = UDim2.new(0.5,0,0.5,0)
+main.AnchorPoint = Vector2.new(0.5,0.5)
+main.BackgroundColor3 = Color3.fromRGB(15,15,20)
+main.Visible = false
+main.ClipsDescendants = true
+Instance.new("UICorner", main)
+
+float.MouseButton1Click:Connect(function()
+	main.Visible = not main.Visible
+end)
+
+-- DRAG (FIX MOBILE)
+local function dragify(obj)
+	local dragging, dragInput, startPos, startFramePos
+
+	obj.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+			dragging = true
+			startPos = input.Position
+			startFramePos = obj.Position
+		end
+	end)
+
+	obj.InputChanged:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+			dragInput = input
+		end
+	end)
+
+	UIS.InputChanged:Connect(function(input)
+		if input == dragInput and dragging then
+			local delta = input.Position - startPos
+			obj.Position = UDim2.new(
+				startFramePos.X.Scale,
+				startFramePos.X.Offset + delta.X,
+				startFramePos.Y.Scale,
+				startFramePos.Y.Offset + delta.Y
+			)
+		end
+	end)
+
+	UIS.InputEnded:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+			dragging = false
+		end
+	end)
+end
+
+dragify(main)
+dragify(float)
+
+-- SCROLL
+local scroll = Instance.new("ScrollingFrame", main)
+scroll.Size = UDim2.new(1,0,1,0)
+scroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+scroll.ScrollBarThickness = 4
+scroll.BackgroundTransparency = 1
+
+local layout = Instance.new("UIListLayout", scroll)
+layout.Padding = UDim.new(0,6)
+
+-- TOGGLE
+local function Toggle(name, def, callback)
+	local f = Instance.new("Frame", scroll)
+	f.Size = UDim2.new(1,-8,0,42)
+	f.BackgroundColor3 = Color3.fromRGB(30,30,40)
+	Instance.new("UICorner", f)
+
+	local t = Instance.new("TextLabel", f)
+	t.Size = UDim2.new(0.65,0,1,0)
+	t.Text = " "..name
+	t.TextColor3 = Color3.new(1,1,1)
+	t.BackgroundTransparency = 1
+	t.TextXAlignment = Enum.TextXAlignment.Left
+
+	local b = Instance.new("TextButton", f)
+	b.Size = UDim2.new(0,60,0,24)
+	b.Position = UDim2.new(1,-70,0.5,-12)
+	b.Text = def and "BẬT" or "TẮT"
+	b.BackgroundColor3 = def and Color3.fromRGB(0,170,80) or Color3.fromRGB(80,80,90)
+	Instance.new("UICorner", b)
+
+	local state = def
+	b.MouseButton1Click:Connect(function()
+		state = not state
+		b.Text = state and "BẬT" or "TẮT"
+		b.BackgroundColor3 = state and Color3.fromRGB(0,170,80) or Color3.fromRGB(80,80,90)
+		callback(state)
+	end)
+end
+
+-- SLIDER FIX (TOUCH)
+local function Slider(name, min, max, def, callback)
+	local f = Instance.new("Frame", scroll)
+	f.Size = UDim2.new(1,-8,0,60)
+	f.BackgroundColor3 = Color3.fromRGB(30,30,40)
+	Instance.new("UICorner", f)
+
+	local label = Instance.new("TextLabel", f)
+	label.Size = UDim2.new(1,0,0,20)
+	label.Text = name.." : "..def
+	label.TextColor3 = Color3.new(1,1,1)
+	label.BackgroundTransparency = 1
+
+	local bar = Instance.new("Frame", f)
+	bar.Size = UDim2.new(1,-20,0,8)
+	bar.Position = UDim2.new(0,10,0,35)
+	bar.BackgroundColor3 = Color3.fromRGB(60,60,70)
+	Instance.new("UICorner", bar)
+
+	local fill = Instance.new("Frame", bar)
+	fill.Size = UDim2.new((def-min)/(max-min),0,1,0)
+	fill.BackgroundColor3 = Color3.fromRGB(0,170,255)
+	Instance.new("UICorner", fill)
+
+	local dragging = false
+
+	local function update(input)
+		local pos = math.clamp((input.Position.X - bar.AbsolutePosition.X)/bar.AbsoluteSize.X,0,1)
+		fill.Size = UDim2.new(pos,0,1,0)
+		local val = math.floor((min+(max-min)*pos)*100)/100
+		label.Text = name.." : "..val
+		callback(val)
+	end
+
+	bar.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+			dragging = true
+			update(input)
+		end
+	end)
+
+	UIS.InputChanged:Connect(function(input)
+		if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+			update(input)
+		end
+	end)
+
+	UIS.InputEnded:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+			dragging = false
+		end
+	end)
+end
+
+-- UI
+Toggle("Enable Ragebot", false, function(v) _G.Settings.Ragebot = v end)
+Toggle("Use Prediction", true, function(v) _G.Config.UsePrediction = v end)
+Toggle("Use Target List", false, function(v) _G.Config.UseTargetList = v end)
+
+Slider("Range", 50, 200, 130, function(v)
+	_G.Config.Range = v
+end)
+
+-- TARGET LIST + CHAMS
+local listFrame = Instance.new("Frame", scroll)
+listFrame.Size = UDim2.new(1,-8,0,200)
+listFrame.BackgroundColor3 = Color3.fromRGB(25,25,35)
+Instance.new("UICorner", listFrame)
+
+local list = Instance.new("ScrollingFrame", listFrame)
+list.Size = UDim2.new(1,-8,1,-8)
+list.Position = UDim2.new(0,4,0,4)
+list.AutomaticCanvasSize = Enum.AutomaticSize.Y
+list.BackgroundTransparency = 1
+
+local layout2 = Instance.new("UIListLayout", list)
+layout2.Padding = UDim.new(0,4)
+
+local Chams = {}
+
+local function ApplyChams(plr)
+	if Chams[plr] then return end
+	local hl = Instance.new("Highlight")
+	hl.FillColor = Color3.fromRGB(255,0,0)
+	hl.OutlineTransparency = 1
+	hl.FillTransparency = 0.5
+	hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+	hl.Parent = plr.Character or plr.CharacterAdded:Wait()
+	Chams[plr] = hl
+end
+
+local function RemoveChams(plr)
+	if Chams[plr] then
+		Chams[plr]:Destroy()
+		Chams[plr] = nil
+	end
+end
+
+local function Refresh()
+	for _,v in pairs(list:GetChildren()) do
+		if v:IsA("TextButton") then v:Destroy() end
+	end
+
+	for _,plr in ipairs(Players:GetPlayers()) do
+		if plr ~= LocalPlayer then
+			local b = Instance.new("TextButton", list)
+			b.Size = UDim2.new(1,0,0,28)
+			b.Text = plr.Name
+			b.TextColor3 = Color3.new(1,1,1)
+
+			local selected = table.find(_G.Config.TargetList, plr.Name)
+			b.BackgroundColor3 = selected and Color3.fromRGB(0,170,80) or Color3.fromRGB(40,40,50)
+			Instance.new("UICorner", b)
+
+			if selected then ApplyChams(plr) else RemoveChams(plr) end
+
+			b.MouseButton1Click:Connect(function()
+				if selected then
+					table.remove(_G.Config.TargetList, table.find(_G.Config.TargetList, plr.Name))
+				else
+					table.insert(_G.Config.TargetList, plr.Name)
+				end
+				Refresh()
+			end)
+		end
+	end
+end
+
+Players.PlayerAdded:Connect(Refresh)
+Players.PlayerRemoving:Connect(function(plr)
+	RemoveChams(plr)
+	Refresh()
+end)
+
+task.spawn(function()
+	while true do
+		for plr,_ in pairs(Chams) do
+			if plr.Character then
+				Chams[plr].Parent = plr.Character
+			end
+		end
+		task.wait(1)
+	end
+end)
+
+Refresh()
+
+-- ================= CORE GIỮ NGUYÊN =================
+
+local Events = ReplicatedStorage:WaitForChild("Events",5)
+local GNX_S = Events:FindFirstChild("GNX_S")
+local ZFKLF_H = Events:FindFirstChild("ZFKLF__H")
+
+local function RandomString(len)
+	local s=""
+	for i=1,len do s=s..string.char(math.random(97,122)) end
+	return s
+end
+
+local function IsInTargetList(plr)
+	return table.find(_G.Config.TargetList, plr.Name) ~= nil
+end
+
+local function GetClosest()
+	local closest, minDist = nil, math.huge
+	local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+	if not root then return nil end
+
+	for _, plr in ipairs(Players:GetPlayers()) do
+		if plr ~= LocalPlayer then
+			local char = plr.Character
+			if char then
+				local hrp = char:FindFirstChild("HumanoidRootPart")
+				local hum = char:FindFirstChildOfClass("Humanoid")
+
+				if hrp and hum and hum.Health > 0 then
+					local dist = (root.Position - hrp.Position).Magnitude
+
+					if _G.Config.UseTargetList then
+						if IsInTargetList(plr) and dist <= _G.Config.Range then
+							if dist < minDist then
+								minDist = dist
+								closest = plr
+							end
+						end
+					else
+						if dist < minDist then
+							minDist = dist
+							closest = plr
+						end
+					end
+				end
+			end
+		end
+	end
+
+	return closest
+end
+
+local function Shoot(t)
+	if not t or not t.Character then return end
+
+	local part = t.Character:FindFirstChild("Head") or t.Character:FindFirstChild("HumanoidRootPart")
+	local tool = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Tool")
+
+	if not part or not tool then return end
+
+	local cam = Workspace.CurrentCamera
+	local pos = part.Position
+
+	if _G.Config.UsePrediction then
+		pos = pos + (part.Velocity * _G.Config.Prediction)
+	end
+
+	local dir = (pos - cam.CFrame.Position).Unit
+	local key = RandomString(25)
+
+	if GNX_S then
+		pcall(function()
+			GNX_S:FireServer(tick(), key, tool, "FDS9I83", cam.CFrame.Position, {dir}, false)
+		end)
+	end
+
+	if ZFKLF_H then
+		pcall(function()
+			ZFKLF_H:FireServer("🧈", tool, key, 1, part, part.Position, dir, nil, nil)
+		end)
+	end
+end
+
+-- HARD LOCK LOOP
+task.spawn(function()
+	while true do
+		if _G.Settings.Ragebot then
+			local target = GetClosest()
+
+			if _G.Config.UseTargetList then
+				if target then
+					Shoot(target)
+					task.wait(0.06)
+				else
+					task.wait(0.25)
+				end
+			else
+				if target then Shoot(target) end
+				task.wait(0.06)
+			end
+		else
+			task.wait(0.3)
+		end
+	end
+end)
+
+print("N FINAL FIXED + CHAMS")
